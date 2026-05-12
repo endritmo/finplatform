@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: finplatform
+  labels:
+    app: backend
+spec:
+  replicas: 1   # Safe to increase (e.g. 2-3) once deployed to production
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # Replace with your actual image after: docker build & push
+          image: endritmorina1/finplatform-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finplatform-secrets
+                  key: DATABASE_URL
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finplatform-secrets
+                  key: SECRET_KEY
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finplatform-secrets
+                  key: GROQ_API_KEY
+            - name: NEWS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finplatform-secrets
+                  key: NEWS_API_KEY
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: finplatform-secrets
+                  key: ALLOWED_HOSTS
+            - name: DEBUG
+              value: "False"
+          livenessProbe:
+            httpGet:
+              path: /api/health/
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health/
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu:    "250m"
+            limits:
+              memory: "512Mi"
+              cpu:    "500m"
+      

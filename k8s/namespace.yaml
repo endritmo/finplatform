@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finplatform
+  labels:
+    app: finplatform

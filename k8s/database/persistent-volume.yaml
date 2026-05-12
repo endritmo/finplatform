@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sqlite-pv
+  namespace: finplatform
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce          # One pod writes at a time (SQLite constraint)
+  persistentVolumeReclaimPolicy: Retain   # Data survives PVC deletion
+  storageClassName: manual
+  hostPath:
+    path: /data/finplatform/db   # Path on the Kubernetes node's disk

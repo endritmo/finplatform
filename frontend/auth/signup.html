@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <div style="max-width:400px; margin:4rem auto;">
+      <div class="forum-card">
+        <h2 style="margin-bottom:1.5rem; text-align:center;">Create an Account</h2>
+        <div class="error-msg" id="error-msg"></div>
+        <label>Username
+          <input id="username" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Username" />
+        </label>
+        <label>Email
+          <input id="email" class="search-input" type="email" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Email (optional)" />
+        </label>
+        <label>Password
+          <input id="password" class="search-input" type="password" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Password" />
+        </label>
+        <label>Confirm Password
+          <input id="password2" class="search-input" type="password" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Confirm Password" />
+        </label>
+        <button class="btn-primary" style="width:100%" id="signup-btn">Sign up</button>
+      </div>
+      <div style="text-align:center; margin-top:1rem; color:var(--text-muted);">
+        Already have an account? <a href="/auth/login.html" style="color:var(--accent)">Log in</a>
+      </div>
+    </div>
+  </main>
+  <script type="module">
+    import { renderNav } from '/js/nav.js';
+    import { signup } from '/js/api.js';
+    renderNav();
+
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+      const errEl = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+      try {
+        await signup({
+          username:  document.getElementById('username').value,
+          email:     document.getElementById('email').value,
+          password:  document.getElementById('password').value,
+          password2: document.getElementById('password2').value,
+        });
+        window.location.href = '/auth/login.html';
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

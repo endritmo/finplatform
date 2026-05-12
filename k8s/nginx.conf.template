@@ -1,0 +1,37 @@
+server {
+    listen 80;
+
+    # Serve all static frontend assets
+    location / {
+        root  /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API calls to the Django backend on Render.
+    # BACKEND_URL is injected by Render as an environment variable.
+    # Example: https://finplatform-backend.onrender.com
+    location /api/ {
+        proxy_pass         ${BACKEND_URL};
+        proxy_set_header   Host              $http_host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+
+    location /ai/ {
+        proxy_pass         ${BACKEND_URL};
+        proxy_set_header   Host              $http_host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+
+    location /admin/ {
+        proxy_pass         ${BACKEND_URL};
+        proxy_set_header   Host              $http_host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}

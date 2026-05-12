@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thread | FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <a href="/forum/list.html" style="color:var(--accent);text-decoration:none">&larr; Back to Forum</a>
+    <div id="thread-container" style="margin-top:1rem"></div>
+    <h3 id="reply-heading" style="margin:2rem 0 1rem 0"></h3>
+    <div id="replies-container"></div>
+    <div id="reply-form-container"></div>
+  </main>
+
+  <script type="module">
+    import { renderNav, renderAIChat } from '/js/nav.js';
+    import { getThread, createReply, deleteReply, Auth } from '/js/api.js';
+    renderNav();
+    renderAIChat();
+
+    const threadId = new URLSearchParams(window.location.search).get('id');
+    if (!threadId) { window.location.href = '/forum/list.html'; }
+
+    const username = Auth.getUsername();
+
+    getThread(threadId).then(({ thread: t, replies }) => {
+      document.title = `${t.title} | FinPlatform`;
+
+      document.getElementById('thread-container').innerHTML = `
+        <div class="forum-card" style="border-color:var(--accent)">
+          <div class="forum-card-header">
+            <h1 class="forum-title" style="font-size:1.5rem">${t.title}</h1>
+            <div>
+              ${t.symbol ? `<span class="badge impact medium">${t.symbol}</span>` : ''}
+              ${t.is_locked ? `<span class="badge impact high">🔒 Locked</span>` : ''}
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;line-height:1.8">${t.content.replace(/\n/g,'<br>')}</div>
+          <div class="forum-meta" style="display:flex;justify-content:space-between;align-items:center">
+            <div>Posted by <strong>${t.author}</strong> on ${new Date(t.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+            ${t.author === username ? `<a href="/forum/thread_edit.html?id=${t.id}" class="btn-secondary">Edit Thread</a>` : ''}
+          </div>
+        </div>`;
+
+      document.getElementById('reply-heading').textContent = `Replies (${replies.length})`;
+
+      const repliesEl = document.getElementById('replies-container');
+      if (!replies.length) {
+        repliesEl.innerHTML = `<p style="color:var(--text-muted)">No replies yet.</p>`;
+      } else {
+        repliesEl.innerHTML = replies.map(r => `
+          <div class="forum-card" style="margin-bottom:1rem" id="reply-${r.id}">
+            <div style="margin-bottom:0.5rem;line-height:1.6">${r.content.replace(/\n/g,'<br>')}</div>
+            <div class="forum-meta" style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>${r.author}</strong> • ${new Date(r.created_at).toLocaleDateString()}</div>
+              ${r.author === username ? `
+                <div style="display:flex;gap:0.5rem">
+                  <a href="/forum/reply_edit.html?id=${r.id}&thread=${t.id}" class="btn-secondary">Edit</a>
+                  <button class="btn-danger" onclick="deleteReplyById(${r.id})">Delete</button>
+                </div>` : ''}
+            </div>
+          </div>`).join('');
+      }
+
+      // Reply form
+      if (!t.is_locked) {
+        const formEl = document.getElementById('reply-form-container');
+        if (Auth.isLoggedIn()) {
+          formEl.innerHTML = `
+            <div class="forum-card" style="margin-top:2rem;background-color:var(--bg-main)">
+              <h4 style="margin-bottom:1rem">Post a Reply</h4>
+              <div class="error-msg" id="reply-error"></div>
+              <textarea id="reply-content" class="search-input" rows="3" style="width:100%;margin-bottom:1rem;padding:0.5rem;resize:vertical" placeholder="Write your reply…"></textarea>
+              <button class="btn-primary" id="submit-reply">Submit Reply</button>
+            </div>`;
+
+          document.getElementById('submit-reply').addEventListener('click', async () => {
+            const content = document.getElementById('reply-content').value.trim();
+            if (!content) return;
+            try {
+              await createReply(t.id, { content });
+              window.location.reload();
+            } catch (e) {
+              const errEl = document.getElementById('reply-error');
+              errEl.textContent = e.message;
+              errEl.style.display = 'block';
+            }
+          });
+        } else {
+          formEl.innerHTML = `<p style="margin-top:2rem">You must be <a href="/auth/login.html?next=/forum/thread.html?id=${t.id}" style="color:var(--accent)">logged in</a> to reply.</p>`;
+        }
+      }
+    });
+
+    window.deleteReplyById = async (id) => {
+      if (!confirm('Delete this reply?')) return;
+      try {
+        await deleteReply(id);
+        document.getElementById(`reply-${id}`)?.remove();
+      } catch (e) { alert(e.message); }
+    };
+  </script>
+  <script src="/js/chat.js" defer></script>
+</body>
+</html>

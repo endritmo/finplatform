@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Forum | FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <div class="page-header">
+      <div>
+        <h2>Market Discussions</h2>
+        <p class="forum-meta">Share insights, setups, and fundamental analysis.</p>
+      </div>
+      <div id="create-btn-container"></div>
+    </div>
+    <div class="forum-filters" id="filters"></div>
+    <div class="thread-list" id="thread-list"><p style="color:var(--text-muted)">Loading…</p></div>
+  </main>
+
+  <script type="module">
+    import { renderNav, renderAIChat } from '/js/nav.js';
+    import { getThreads, Auth } from '/js/api.js';
+    renderNav();
+    renderAIChat();
+
+    const params   = new URLSearchParams(window.location.search);
+    const category = params.get('category') || '';
+    const query    = category ? `?category=${category}` : '';
+
+    // Auth-aware create button
+    const btnContainer = document.getElementById('create-btn-container');
+    if (Auth.isLoggedIn()) {
+      btnContainer.innerHTML = `<a href="/forum/thread_create.html" class="btn-primary">Start a Thread</a>`;
+    } else {
+      btnContainer.innerHTML = `<a href="/auth/login.html?next=/forum/list.html" class="btn-primary" style="background-color:var(--border)">Login to Post</a>`;
+    }
+
+    getThreads(query).then(({ threads, categories, current_category }) => {
+      // Render category filter pills
+      const filtersEl = document.getElementById('filters');
+      filtersEl.innerHTML = `
+        <a href="/forum/list.html" class="badge ${!current_category ? 'active' : ''}">All</a>
+        ${categories.map(c => `<a href="/forum/list.html?category=${c.slug}" class="badge ${current_category === c.slug ? 'active' : ''}">${c.name}</a>`).join('')}
+      `;
+
+      // Render threads
+      const listEl = document.getElementById('thread-list');
+      if (!threads.length) {
+        listEl.innerHTML = `<div class="forum-card"><p>No threads found. Be the first to post!</p></div>`;
+        return;
+      }
+      listEl.innerHTML = threads.map(t => `
+        <div class="forum-card ${t.is_pinned ? 'pinned' : ''}">
+          <div class="forum-card-header">
+            <div>
+              ${t.is_pinned ? '📌 ' : ''}
+              <a href="/forum/thread.html?id=${t.id}" class="forum-title">${t.title}</a>
+            </div>
+            <div>
+              ${t.symbol ? `<span class="badge impact medium">${t.symbol}</span>` : ''}
+              ${t.category ? `<span class="badge">${t.category.name}</span>` : ''}
+            </div>
+          </div>
+          <div class="forum-card-body" style="color:var(--text-muted);margin-bottom:1rem;font-size:0.95rem">${t.content}</div>
+          <div class="forum-card-footer" style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--text-muted)">
+            <span>By <strong>${t.author}</strong></span>
+            <span>${t.reply_count} Replies • Updated ${new Date(t.updated_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+      `).join('');
+    });
+  </script>
+  <script src="/js/chat.js" defer></script>
+</body>
+</html>

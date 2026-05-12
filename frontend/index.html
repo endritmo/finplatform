@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <div class="hero">
+      <h1>Market clarity, simplified.</h1>
+      <p>A minimalist financial terminal. View live charts, track economic data,
+         and understand past market movements with our context-aware AI.</p>
+      <a href="/charts.html" class="btn-primary">View Markets</a>
+    </div>
+  </main>
+  <script type="module">
+    import { renderNav, renderAIChat } from '/js/nav.js';
+    renderNav();
+    renderAIChat();
+  </script>
+  <script src="/js/chat.js" defer></script>
+</body>
+</html>

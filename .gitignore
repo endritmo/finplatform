@@ -1,0 +1,16 @@
+# Environment
+**/.env
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+
+
+# Django collected static
+backend/staticfiles/
+
+# Docker
+**/.dockerignore
+
+"k8s/secrets.yaml" 

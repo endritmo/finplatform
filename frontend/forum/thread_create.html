@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Thread | FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <a href="/forum/list.html" style="color:var(--accent);text-decoration:none">&larr; Cancel</a>
+    <div class="forum-card" style="margin-top:1rem;max-width:800px">
+      <h2 style="margin-bottom:1.5rem">Create New Discussion</h2>
+      <div class="error-msg" id="error-msg"></div>
+      <label>Category<br>
+        <select id="category" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem">
+          <option value="">— No category —</option>
+        </select>
+      </label>
+      <label>Symbol (optional)<br>
+        <input id="symbol" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="e.g. BTCUSDT (Optional)" />
+      </label>
+      <label>Title<br>
+        <input id="title" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Thread Title" />
+      </label>
+      <label>Content<br>
+        <textarea id="content" class="search-input" rows="6" style="width:100%;margin-bottom:1rem;padding:0.5rem;resize:vertical" placeholder="What are your thoughts on the market?"></textarea>
+      </label>
+      <button class="btn-primary" id="post-btn">Post Thread</button>
+    </div>
+  </main>
+  <script type="module">
+    import { renderNav } from '/js/nav.js';
+    import { getThreads, createThread, Auth } from '/js/api.js';
+    renderNav();
+
+    if (!Auth.isLoggedIn()) window.location.href = '/auth/login.html?next=/forum/thread_create.html';
+
+    // Pre-fill symbol from query param (from Charts page)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('symbol')) document.getElementById('symbol').value = params.get('symbol');
+
+    // Load categories
+    getThreads().then(({ categories }) => {
+      const sel = document.getElementById('category');
+      categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.slug; opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    });
+
+    document.getElementById('post-btn').addEventListener('click', async () => {
+      const errEl = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+      try {
+        const thread = await createThread({
+          title:    document.getElementById('title').value,
+          content:  document.getElementById('content').value,
+          symbol:   document.getElementById('symbol').value,
+          category: document.getElementById('category').value,
+        });
+        window.location.href = `/forum/thread.html?id=${thread.id}`;
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

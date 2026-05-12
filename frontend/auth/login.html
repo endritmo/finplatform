@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <div style="max-width:400px; margin:4rem auto;">
+      <div class="forum-card">
+        <h2 style="margin-bottom:1.5rem; text-align:center;">Welcome Back</h2>
+        <div class="error-msg" id="error-msg"></div>
+        <label>Username
+          <input id="username" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Username" />
+        </label>
+        <label>Password
+          <input id="password" class="search-input" type="password" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" placeholder="Password" />
+        </label>
+        <button class="btn-primary" style="width:100%" id="login-btn">Log in</button>
+      </div>
+      <div style="text-align:center; margin-top:1rem; color:var(--text-muted);">
+        Don't have an account? <a href="/auth/signup.html" style="color:var(--accent)">Sign up</a>
+      </div>
+    </div>
+  </main>
+  <script type="module">
+    import { renderNav } from '/js/nav.js';
+    import { login, Auth } from '/js/api.js';
+    renderNav();
+
+    if (Auth.isLoggedIn()) window.location.href = '/index.html';
+
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const errEl = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+      try {
+        const data = await login({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value,
+        });
+        Auth.save(data);
+        const next = new URLSearchParams(window.location.search).get('next') || '/index.html';
+        window.location.href = next;
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+
+    document.getElementById('password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+  </script>
+</body>
+</html>

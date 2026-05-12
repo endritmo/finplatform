@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Thread | FinPlatform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <a id="back-link" href="/forum/list.html" style="color:var(--accent);text-decoration:none">&larr; Cancel</a>
+    <div class="forum-card" style="margin-top:1rem;max-width:800px">
+      <h2 style="margin-bottom:1.5rem">Edit Thread</h2>
+      <div class="error-msg" id="error-msg"></div>
+      <label>Title<br>
+        <input id="title" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" />
+      </label>
+      <label>Symbol<br>
+        <input id="symbol" class="search-input" style="width:100%;margin-bottom:1rem;padding-left:0.5rem" />
+      </label>
+      <label>Content<br>
+        <textarea id="content" class="search-input" rows="8" style="width:100%;margin-bottom:1rem;padding:0.5rem;resize:vertical"></textarea>
+      </label>
+      <button class="btn-primary" id="save-btn">Save Changes</button>
+    </div>
+  </main>
+  <script type="module">
+    import { renderNav } from '/js/nav.js';
+    import { getThread, editThread, Auth } from '/js/api.js';
+    renderNav();
+
+    if (!Auth.isLoggedIn()) window.location.href = '/auth/login.html';
+
+    const threadId = new URLSearchParams(window.location.search).get('id');
+    document.getElementById('back-link').href = `/forum/thread.html?id=${threadId}`;
+
+    getThread(threadId).then(({ thread: t }) => {
+      document.getElementById('title').value   = t.title;
+      document.getElementById('symbol').value  = t.symbol;
+      document.getElementById('content').value = t.content;
+    });
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const errEl = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+      try {
+        await editThread(threadId, {
+          title:   document.getElementById('title').value,
+          symbol:  document.getElementById('symbol').value,
+          content: document.getElementById('content').value,
+        });
+        window.location.href = `/forum/thread.html?id=${threadId}`;
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

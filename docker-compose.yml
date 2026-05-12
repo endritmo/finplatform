@@ -1,0 +1,69 @@
+version: '3.9'
+
+# ── FinPlatform — Local Development Stack ─────────────────────────────────────
+#
+# Usage:
+#   docker compose up --build        # start everything
+#   docker compose down              # stop everything
+#   docker compose logs backend      # view backend logs
+#   docker compose exec backend bash # shell into backend
+
+services:
+
+  # ── Frontend (Nginx serving static HTML/CSS/JS) ──────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - front-tier          # talks to backend only
+    restart: unless-stopped
+
+  # ── Backend (Django REST API via Gunicorn) ────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY:    ${SECRET_KEY}
+      GROQ_API_KEY:  ${GROQ_API_KEY}
+      NEWS_API_KEY:  ${NEWS_API_KEY}
+      DEBUG:         ${DEBUG:-False}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      DATABASE_URL:  ${DATABASE_URL}       # ← was hardcoded to SQLite path, now reads from .env
+    depends_on:
+      - db                                 # ← removed the broken volumes block that was here
+    networks:
+      - front-tier          # receives requests from frontend
+      - back-tier           # talks to the database
+    restart: unless-stopped
+
+  # ── PostgreSQL Database ───────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       finplatform
+      POSTGRES_USER:     finplatform_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - back-tier           # isolated — only backend can reach it
+    restart: unless-stopped
+
+volumes:                                   # ← this was missing entirely
+  postgres_data:
+
+networks:
+  front-tier:               # user-facing traffic layer
+  back-tier:                # internal data layer, db lives here alone
+
+
