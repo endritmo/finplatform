@@ -40,7 +40,7 @@ jobs:
         run: |
           cd backend
           python manage.py check
-          python manage.py migrate --run-syncdb
+          
 
   # ── Job 2: Build Docker images and push to Docker Hub ────────
   build:
